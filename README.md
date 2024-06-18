@@ -13,5 +13,5 @@ RAG systems rely on data that has been properly chunked and embedded. Langchunk 
 
 **Steps for future versions**
 
-Allow for different languages
-Generate embeddings for vector databases
+- Allow for different languages
+- Generate embeddings for vector databases
