@@ -40,20 +40,6 @@ function processDirectory(dir) {
   });
 }
 
-const code = `function addMetadata(chunks) {
-  return chunks.map((chunk, index) => ({
-    id: index,
-    content: chunk,
-    type: determineType(chunk), // You need to implement this function
-    position: index,
-    length: chunk.length
-  }));
-}
-
-const chunksWithMetadata = addMetadata(finalChunks);
-console.log(chunksWithMetadata);
-`;
-
 function chunkFile(filePath) {
   // Read file contents
   fs.readFile(filePath, "utf8", (err, data) => {
@@ -71,10 +57,15 @@ function chunkFile(filePath) {
 }
 
 function extractCodeChunks(sourceCode) {
-  const ast = esprima.parseScript(code, { loc: true });
+  const ast = esprima.parseScript(sourceCode, { loc: true });
   const chunks = [];
+  let firstChunkCollected = false;
+
   estraverse.traverse(ast, {
     enter: function (node, parent) {
+      if (firstChunkCollected) {
+        return estraverse.VisitorOption.Break;
+      }
       if (
         node.type === "FunctionDeclaration" ||
         node.type === "ClassDeclaration" ||
