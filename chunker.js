@@ -30,13 +30,7 @@ function extractCodeChunks(ast, sourceCode, fileName) {
       ) {
         const start = node.loc.start.line - 1;
         const end = node.loc.end.line;
-        const chunkText = sourceCode.split("\n").slice(start, end).join("\n");
-        const chunk = {
-          text: chunkText,
-          fileName: fileName,
-          startLine: start + 1,
-          endLine: end,
-        };
+        const chunk = sourceCode.split("\n").slice(start, end).join("\n");
 
         chunks.push(chunk);
       }
@@ -63,7 +57,7 @@ function adjustChunkSize(chunks) {
 }
 
 const finalChunks = adjustChunkSize(codeChunks);
-console.log(finalChunks);
+// console.log(finalChunks);
 
 function determineType(chunk) {
   // Implement this based on your needs
@@ -77,10 +71,12 @@ function addMetadata(chunks) {
     type: determineType(chunk),
     position: index,
     length: chunk.length,
+    filePath: fileName,
   }));
 }
 
 const chunksWithMetadata = addMetadata(finalChunks);
+console.log(chunksWithMetadata);
 
 // const vectorDatabase = require("vector-database-client");
 
