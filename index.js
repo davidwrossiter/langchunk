@@ -28,6 +28,10 @@ function processDirectory(dir) {
     files.forEach((file) => {
       const fullPath = path.join(dir, file.name);
 
+      if (fullPath.includes("node_modules")) {
+        return;
+      }
+
       if (file.isDirectory()) {
         processDirectory(fullPath);
       } else if (
@@ -57,15 +61,16 @@ function chunkFile(filePath) {
 }
 
 function extractCodeChunks(sourceCode) {
-  const ast = esprima.parseScript(sourceCode, { loc: true });
+  try {
+    ast = esprima.parseScript(sourceCode, { loc: true });
+  } catch (err) {
+    // console.log("Error parsing source code: ", err);
+    return [];
+  }
   const chunks = [];
-  let firstChunkCollected = false;
 
   estraverse.traverse(ast, {
     enter: function (node, parent) {
-      if (firstChunkCollected) {
-        return estraverse.VisitorOption.Break;
-      }
       if (
         node.type === "FunctionDeclaration" ||
         node.type === "ClassDeclaration" ||
@@ -75,7 +80,7 @@ function extractCodeChunks(sourceCode) {
         const start = node.loc.start.line - 1;
         const end = node.loc.end.line;
         const chunk = sourceCode.split("\n").slice(start, end).join("\n");
-        console.log("Chunk: ", chunk);
+        // console.log("Chunk: ", chunk);
         chunks.push(chunk);
       }
     },
