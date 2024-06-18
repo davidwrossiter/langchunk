@@ -6,8 +6,12 @@ RAG systems rely on data that has been properly chunked and embedded. Langchunk 
 
 ---
 
-Steps to complete:
+**Current capabilities**
 
-1. Get all information from a given directory
-2. Chunk the information of each file and include metadata about its relative file location
-3. Create embeddings for the entire directory, the dependencies, file structure etc.
+- Allows for chunking of javascript source code.
+- Chunks based on Function declaration, class declaration, variable declaration, and expression statements.
+
+**Steps for future versions**
+
+Allow for different languages
+Generate embeddings for vector databases
