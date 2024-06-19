@@ -1,136 +1,76 @@
 #!/usr/bin/env node
-const esprima = require("esprima");
-const estraverse = require("estraverse");
 
 const fs = require("fs");
+const path = require("path");
 const { Command } = require("commander");
 const program = new Command();
-const path = require("path");
 
 program
   .version("1.0.0")
   .arguments("<directory>")
   .description("Chunk JavaScript files in a directory")
-  .action((directory) => {
-    console.log(`Chunking files in directory ${directory}`);
-    processDirectory(directory);
+  .action(async (directory) => {
+    console.log(`Chunking files in directory: ${directory}`);
+    const us = await processDirectory(directory);
+    // console.log(us);
   });
 
 program.parse(process.argv);
 
 function processDirectory(dir) {
-  fs.readdir(dir, { withFileTypes: true }, (err, files) => {
-    if (err) {
-      console.error(`Error reading directory: ${err.message}`);
-      return;
-    }
-
-    files.forEach((file) => {
-      const fullPath = path.join(dir, file.name);
-
-      if (fullPath.includes("node_modules")) {
+  return new Promise((resolve, reject) => {
+    fs.readdir(dir, { withFileTypes: true }, async (err, files) => {
+      if (err) {
+        console.error(`Error reading directory: ${err.message}`);
+        reject(err);
         return;
       }
 
-      if (file.isDirectory()) {
-        processDirectory(fullPath);
-      } else if (
-        file.isFile() &&
-        (file.name.endsWith(".js") || file.name.endsWith(".jsx"))
-      ) {
-        chunkFile(fullPath);
-        // console.log(chunks);
+      const allChunks = [];
+      for (const file of files) {
+        const fullPath = path.join(dir, file.name);
+
+        if (file.isDirectory()) {
+          const subDirChunks = await processDirectory(fullPath);
+          allChunks.push(...subDirChunks);
+        } else if (
+          file.isFile() &&
+          (file.name.endsWith(".js") || file.name.endsWith(".jsx"))
+        ) {
+          const fileChunks = await chunkFile(fullPath);
+          allChunks.push(...fileChunks);
+        }
       }
+      resolve(allChunks);
     });
   });
 }
 
 function chunkFile(filePath) {
-  // Read file contents
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      console.error(`Error reading file: ${filePath}, ${err.message}`);
-      return;
-    }
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        console.error(`Error reading file: ${filePath}, ${err.message}`);
+        reject(err);
+        return;
+      }
 
-    // Chunking logic goes here
-    const chunks = extractCodeChunks(data);
-    console.log(chunks);
-
-    // Example: Print chunks to console (replace with actual storage logic)
-    console.log(`File: ${filePath}, Chunks: ${chunks.length}`);
-    return chunks;
+      const chunks = chunkData(data);
+      console.log("DA CHUNK: ", chunks);
+      // console.log(`File: ${filePath}, Chunks: ${chunks.length}`);
+      resolve(chunks);
+    });
   });
 }
 
-function extractCodeChunks(sourceCode) {
-  try {
-    ast = esprima.parseScript(sourceCode, { loc: true });
-  } catch (err) {
-    // console.log("Error parsing source code: ", err);
-    return [];
-  }
+function chunkData(data) {
+  // Dummy chunking function - replace with your actual logic
+  const chunkSize = 1000; // Example chunk size
   const chunks = [];
 
-  estraverse.traverse(ast, {
-    enter: function (node, parent) {
-      if (
-        node.type === "FunctionDeclaration" ||
-        node.type === "ClassDeclaration" ||
-        node.type === "VariableDeclaration" ||
-        node.type === "ExpressionStatement"
-      ) {
-        const start = node.loc.start.line - 1;
-        const end = node.loc.end.line;
-        const chunk = sourceCode.split("\n").slice(start, end).join("\n");
-        // console.log("Chunk: ", chunk);
-        chunks.push(chunk);
-      }
-    },
-  });
+  for (let i = 0; i < data.length; i += chunkSize) {
+    chunks.push(data.slice(i, i + chunkSize));
+  }
+
   return chunks;
 }
-// const codeChunks = extractCodeChunks(ast, code);
-// console.log(codeChunks);
-
-const MAX_CHUNK_SIZE = 1000;
-
-function adjustChunkSize(chunks) {
-  const adjustedChunks = [];
-  chunks.forEach((chunk) => {
-    if (chunk.length > MAX_CHUNK_SIZE) {
-      const subChunks = chunk.match(new RegExp(`.{1,${MAX_CHUNK_SIZE}}`, "g"));
-      adjustedChunks.push(...subChunks);
-    } else {
-      adjustedChunks.push(chunk);
-    }
-  });
-  return adjustedChunks;
-}
-
-// const finalChunks = adjustChunkSize(codeChunks);
-
-function determineType(chunk) {
-  // Implement this based on your needs
-  return "Function";
-}
-
-function addMetadata(chunks) {
-  return chunks.map((chunk, index) => ({
-    id: index,
-    content: chunk,
-    type: determineType(chunk),
-    position: index,
-    length: chunk.length,
-    filePath: fileName,
-  }));
-}
-
-// const chunksWithMetadata = addMetadata(finalChunks);
-// console.log(chunksWithMetadata);
-
-// const vectorDatabase = require("vector-database-client");
-
-// chunksWithMetadata.forEach((chunk) => {
-//   vectorDatabase.insert(chunk);
-// });
