@@ -38,7 +38,8 @@ function processDirectory(dir) {
         file.isFile() &&
         (file.name.endsWith(".js") || file.name.endsWith(".jsx"))
       ) {
-        console.log(chunkFile(fullPath));
+        chunkFile(fullPath);
+        // console.log(chunks);
       }
     });
   });
@@ -54,9 +55,11 @@ function chunkFile(filePath) {
 
     // Chunking logic goes here
     const chunks = extractCodeChunks(data);
+    console.log(chunks);
 
     // Example: Print chunks to console (replace with actual storage logic)
     console.log(`File: ${filePath}, Chunks: ${chunks.length}`);
+    return chunks;
   });
 }
 
